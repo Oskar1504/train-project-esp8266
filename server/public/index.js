@@ -22,7 +22,8 @@ var app = new Vue({
     data: {
         commands:[
             {name:"Ping Website",source:"website",target:"website",type:"message",content:"Ping!"},
-            {name:"mapUpdate mock",source:"website",target:"server",type:"mapUpdate",content:"001.002:--------"}
+            {name:"mapUpdate mock",source:"website",target:"server",type:"mapUpdate",content:"001.002:--------"},
+            {name:"Ping",target:"website",type:"ping",content:"ping"}
         ],
         debug: [],
         exampleSocket: wss,

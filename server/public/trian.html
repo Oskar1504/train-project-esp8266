@@ -1,12 +1,25 @@
-<html>
-
+<!doctype html>
+<html lang="de">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Oskar">
+    <title>Train map</title>
+
+    <!-- bootstrap 5  -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <!-- Vue.js  -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+    <link href="train.css" rel="stylesheet">
     <style>
         .line{
             stroke-dasharray: 25;
             animation: dash 10s linear infinite;
             stroke: deepskyblue;
-            stroke-width: 6;
+            stroke-width: 8;
         }
 
         @keyframes dash {
@@ -18,105 +31,60 @@
 </head>
 
 <body>
-<svg id="map" width="100%" height="100%">
-</svg>
-<script>
-    let scale  = 40;
-    fetch('./stations.json').then(response => {
-        return response.json();
-    }).then(data => {
-        console.log(data);
-        // Work with JSON data here
-        renderMap(data)
-    }).catch(err => {
-        // Do something for an error here
-    });
+    <section>
+        <nav>
+            <svg id="map">
+            </svg>
+        </nav>
 
+        <article id="app">
+            <ul class="list-group">
 
-    let  wss = new WebSocket("ws://localhost:42082")
+                <li v-for="train in stations.trains" class="list-group-item border-primary">
+                    <div  data-bs-toggle="collapse" :href="'#info_'+train.id" class=" btn btn-outline-primary btn-sm w-100">{{train.name}}</div>
+                    <div :id="'info_'+train.id" class="collapse  mt-2">
+                        <div class="row" >
+                            <div class="col-12">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item small-list-item">
+                                    </li>
+                                    <li v-for="(val,key) in train" class="list-group-item small-list-item">
+                                        {{key}} : {{val}}
+                                    </li>
+                                    <li class="list-group-item small-list-item">
+                                    </li>
+                                    <li class="list-group-item small-list-item">
+                                        <div>Steuerbefehle</div>
+                                    </li>
+                                    <li class="list-group-item small-list-item">
+                                        <div class="btn btn-sm btn-outline-primary col-12">Start</div>
+                                    </li>
+                                    <li class="list-group-item small-list-item">
+                                        <div @click="commands['pinStatus'].send(train.id,'pinD3',1)" class="btn btn-sm btn-outline-primary col-12">Licht An</div>
+                                    </li>
+                                    <li class="list-group-item small-list-item">
+                                        <div @click="commands['pinStatus'].send(train.id,'pinD3',0)" class="btn btn-sm btn-outline-primary col-12">Licht Aus</div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </article>
+    </section>
 
-    wss.onmessage = async function (event) {
-        let msg = JSON.parse(await (new Response(event.data)).text())
-        if (msg.target == "website"){
-            console.log(msg)
-            if (msg.type == "map") {
-                fetch('./stations.json').then(response => {
-                    return response.json();
-                }).then(data => {
-                    console.log(data);
-                    // Work with JSON data here
-                    renderMap(data)
-                }).catch(err => {
-                    // Do something for an error here
-                });
-            }
-        }
-    }
+    <!-- ADDING DROPDOWN/COLLAPSE FUNCTIONALITY -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
-    wss.onclose = async function (event) {
-        console.error("WS Con closed")
-        console.log(event)
-    }
-
-    function renderMap(data){
-        data.blocks.forEach(block => {
-            block.lines.forEach(line => {
-                let newLine = document.createElementNS('http://www.w3.org/2000/svg','line');
-                newLine.setAttribute('x1',line.p1[0] * scale);
-                newLine.setAttribute('y1',line.p1[1] * scale);
-                newLine.setAttribute('x2',line.p2[0] * scale);
-                newLine.setAttribute('y2',line.p2[1] * scale);
-                newLine.setAttribute("stroke", "black")
-                // newLine.setAttribute("stroke", block.color)
-                newLine.setAttribute("stroke-width", 6)
-
-                if(block.command){
-                    newLine.addEventListener("click", function(){
-                        window[block.command](block);
-                    })
-                }
-
-                document.getElementById("map").append(newLine);
-
-                if(line.label){
-                    let newText = document.createElementNS('http://www.w3.org/2000/svg','text');
-                    newText.setAttribute('x',line.p1[0] * scale + 25);
-                    newText.setAttribute('y',line.p1[1] * scale + 25);
-                    newText.innerHTML = block.name;
-                    document.getElementById("map").append(newText);
-                    //TODO trains drunter schreiben -> wird schwer-> entweder query der rains oder extra attr onblock vom server gesetzt
-
-                    Object.values(data.trains).forEach(train => {
-                        if(train.active_block == block.name){
-                            let newText = document.createElementNS('http://www.w3.org/2000/svg','text');
-                            newText.setAttribute('x',line.p1[0] * scale + 25);
-                            newText.setAttribute('y',line.p1[1] * scale + 25 + 25);
-                            newText.innerHTML = train.name;
-                            document.getElementById("map").append(newText);
-                        }
-                    })
-                }
-
-
-                if(block.active){
-                    let newLine = document.createElementNS('http://www.w3.org/2000/svg','line');
-                    newLine.setAttribute('id','line2');
-                    newLine.setAttribute('x1',line.p1[0] * scale);
-                    newLine.setAttribute('y1',line.p1[1] * scale);
-                    newLine.setAttribute('x2',line.p2[0] * scale);
-                    newLine.setAttribute('y2',line.p2[1] * scale);
-                    newLine.setAttribute("class", "line")
-                    document.getElementById("map").append(newLine);
-                }
-            })
+    <script src="train.js"></script>
+    <!-- ADDING DROPDOWN/COLLAPSE FUNCTIONALITY -->
+    <script>
+        let dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
+        let dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl)
         })
-    }
-
-    function debug(block) {
-        console.log("debug")
-        console.log(block)
-    }
-</script>
+    </script>
 </body>
 
 </html>
