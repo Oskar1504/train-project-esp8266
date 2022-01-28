@@ -1,0 +1,122 @@
+<html>
+
+<head>
+    <style>
+        .line{
+            stroke-dasharray: 25;
+            animation: dash 10s linear infinite;
+            stroke: deepskyblue;
+            stroke-width: 6;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 1000;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<svg id="map" width="100%" height="100%">
+</svg>
+<script>
+    let scale  = 40;
+    fetch('./stations.json').then(response => {
+        return response.json();
+    }).then(data => {
+        console.log(data);
+        // Work with JSON data here
+        renderMap(data)
+    }).catch(err => {
+        // Do something for an error here
+    });
+
+
+    let  wss = new WebSocket("ws://localhost:42082")
+
+    wss.onmessage = async function (event) {
+        let msg = JSON.parse(await (new Response(event.data)).text())
+        if (msg.target == "website"){
+            console.log(msg)
+            if (msg.type == "map") {
+                fetch('./stations.json').then(response => {
+                    return response.json();
+                }).then(data => {
+                    console.log(data);
+                    // Work with JSON data here
+                    renderMap(data)
+                }).catch(err => {
+                    // Do something for an error here
+                });
+            }
+        }
+    }
+
+    wss.onclose = async function (event) {
+        console.error("WS Con closed")
+        console.log(event)
+    }
+
+    function renderMap(data){
+        data.blocks.forEach(block => {
+            block.lines.forEach(line => {
+                let newLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+                newLine.setAttribute('x1',line.p1[0] * scale);
+                newLine.setAttribute('y1',line.p1[1] * scale);
+                newLine.setAttribute('x2',line.p2[0] * scale);
+                newLine.setAttribute('y2',line.p2[1] * scale);
+                newLine.setAttribute("stroke", "black")
+                // newLine.setAttribute("stroke", block.color)
+                newLine.setAttribute("stroke-width", 6)
+
+                if(block.command){
+                    newLine.addEventListener("click", function(){
+                        window[block.command](block);
+                    })
+                }
+
+                document.getElementById("map").append(newLine);
+
+                if(line.label){
+                    let newText = document.createElementNS('http://www.w3.org/2000/svg','text');
+                    newText.setAttribute('x',line.p1[0] * scale + 25);
+                    newText.setAttribute('y',line.p1[1] * scale + 25);
+                    newText.innerHTML = block.name;
+                    document.getElementById("map").append(newText);
+                    //TODO trains drunter schreiben -> wird schwer-> entweder query der rains oder extra attr onblock vom server gesetzt
+
+                    Object.values(data.trains).forEach(train => {
+                        if(train.active_block == block.name){
+                            let newText = document.createElementNS('http://www.w3.org/2000/svg','text');
+                            newText.setAttribute('x',line.p1[0] * scale + 25);
+                            newText.setAttribute('y',line.p1[1] * scale + 25 + 25);
+                            newText.innerHTML = train.name;
+                            document.getElementById("map").append(newText);
+                        }
+                    })
+                }
+
+
+                if(block.active){
+                    let newLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+                    newLine.setAttribute('id','line2');
+                    newLine.setAttribute('x1',line.p1[0] * scale);
+                    newLine.setAttribute('y1',line.p1[1] * scale);
+                    newLine.setAttribute('x2',line.p2[0] * scale);
+                    newLine.setAttribute('y2',line.p2[1] * scale);
+                    newLine.setAttribute("class", "line")
+                    document.getElementById("map").append(newLine);
+                }
+            })
+        })
+    }
+
+    function debug(block) {
+        console.log("debug")
+        console.log(block)
+    }
+</script>
+</body>
+
+</html>
