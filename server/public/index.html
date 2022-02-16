@@ -22,7 +22,7 @@
 
       <div class="container-fluid">
         <div class="row">
-          <div class="col-md-9">
+          <div class="col-md-8">
            <h1 class="h2">Websocket Commands/Messages</h1>
             <div class="table-responsive">
               <table class="table table-striped table-sm table-dark">
@@ -99,18 +99,16 @@
               </div>
             </div>
           </div>
-          <div class="col-md-3">
-            <h2 class="h2">Debug</h2>
+          <div class="col-md-4">
+            <h2 class="h2" @click="debug = []">Debug</h2>
             <table class="table table-striped table-sm table-dark">
-              <tr v-if="debug.length > 0">
-                <th scope="col">Time</th>
-                <th scope="col">Source</th>
-                <th scope="col">Content</th>
-              </tr>
+              <tr v-if="debug.length > 0"></tr>
               <tr v-for="msg in debug">
-                <td>{{msg.timestamp}}</td>
-                <td>{{msg.source}}</td>
-                <td>{{msg.content}}</td>
+                <td>
+                  <div v-for="(val,key) in msg">
+                    {{key}}: {{val}}
+                  </div>
+                </td>
               </tr>
             </table>
           </div>

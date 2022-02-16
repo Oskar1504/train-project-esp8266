@@ -7,7 +7,7 @@ svgElm.setAttribute("height", window.innerHeight +"px")
 svgElm.setAttribute("width", window.innerWidth * 0.5 +"px")
 
 
-fetch('./stations.json').then(response => {
+fetch('./data/stations.json').then(response => {
     return response.json();
 }).then(data => {
     console.log(data);
@@ -20,13 +20,17 @@ fetch('./stations.json').then(response => {
 
 
 let  wss = new WebSocket("ws://localhost:42082")
+// let  wss = new WebSocket("ws://192.168.178.42:42082")
 
 wss.onmessage = async function (event) {
     let msg = JSON.parse(await (new Response(event.data)).text())
+    msg.type == "controlCommand"? msg.content = msg.pins.map(pin => {return pin.pin + " -> " + pin.pin_status}).join(", ") : null
+    app.debug.unshift(msg)
+    app.debug.length > 5 ? app.debug.pop() : null
     if (msg.target == "website"){
         console.log(msg)
         if (msg.type == "map") {
-            fetch('./stations.json').then(response => {
+            fetch('./data/stations.json').then(response => {
                 return response.json();
             }).then(data => {
                 console.log(data);
@@ -115,6 +119,7 @@ var app = new Vue({
     data: {
         exampleSocket: wss,
         stations:{},
+        debug:[],
         commands:{
             pinStatus:{
                 send:function (target, pin, pin_status) {
@@ -125,6 +130,19 @@ var app = new Vue({
                         pin_status:pin_status
                     }))
                 }
+            },
+            controlCommand:{
+                send:function (target, pin, pin_status) {
+                    document.querySelectorAll(".direction").forEach(elm => {elm.classList.remove("active")})
+                    event.srcElement.classList.add("active");
+                    wss.send(JSON.stringify({
+                        target:target,
+                        type:"controlCommand",
+                        pins: pin.map((pin, index) => {
+                            return {pin:pin,pin_status:pin_status[index]}
+                        })
+                    }))
+                }
             }
         }
     },
@@ -132,6 +150,8 @@ var app = new Vue({
 
     },
     methods: {
-
+        swag: function (train) {
+            console.log(train.speed)
+        }
     }
 });

@@ -1,16 +1,35 @@
 {
+    "cards": {
+        "358340": [
+            "Block 4",
+            "Block 1"
+        ],
+        "842410": [
+            "Block 1",
+            "Block 2"
+        ],
+        "1390390": [
+            "Block 2",
+            "Block 3"
+        ],
+        "1897510": [
+            "Block 3",
+            "Block 4"
+        ]
+    },
     "trains": {
         "esp_1": {
             "id": "esp_1",
             "name": "Lok 1",
-            "active_block": "Block 1",
-            "last_block": "Block 4"
+            "active_block": "Block 2",
+            "last_block": "Block 1",
+            "speed": 0
         },
         "esp_2": {
             "id": "esp_2",
             "name": "Lok 2",
-            "active_block": "Block 1",
-            "last_block": "Block 1"
+            "active_block": "Block 2",
+            "speed": 0
         }
     },
     "blocks": [
@@ -18,7 +37,7 @@
             "name": "Block 1",
             "command": "debug",
             "color": "#303030",
-            "active": true,
+            "active": false,
             "lines": [
                 {
                     "p1": [
@@ -57,7 +76,7 @@
             "name": "Block 2",
             "color": "#808080",
             "command": "debug",
-            "active": false,
+            "active": true,
             "lines": [
                 {
                     "p1": [
@@ -135,7 +154,7 @@
             "name": "Block 4",
             "color": "#808080",
             "command": "debug",
-            "active": false,
+            "active": true,
             "lines": [
                 {
                     "p1": [

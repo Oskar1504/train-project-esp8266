@@ -1,16 +1,17 @@
 // let  wss = new WebSocket("wss://a0f8afe0228e.ngrok.io")
 
 let  wss = new WebSocket("ws://localhost:42082")
+// let  wss = new WebSocket("ws://53b5-2003-c6-9704-6000-5fd-8ede-34b-9c5d.ngrok.io")
 
 wss.onmessage = async function (event) {
     let msg = JSON.parse(await (new Response(event.data)).text())
+    msg.timestamp = new Date().toLocaleTimeString("de-DE")
+
     if (msg.target == "website"){
         console.log(msg)
-        if (msg.type == "message") {
-            msg.timestamp = new Date().toLocaleTimeString("de-DE")
-            app.debug.push(msg)
-        }
     }
+    app.debug.unshift(msg)
+    if(app.debug.length > 5){app.debug.pop()}
 }
 wss.onclose = async function (event) {
     console.error("WS Con closed")
@@ -34,7 +35,7 @@ var app = new Vue({
             type: "updatePin"
         },
         updateMapMessage:{
-            source:"website",
+            source:"esp_1",
             type:"mapUpdate",
             content:"001.002:--------",
             target: "server"
@@ -60,12 +61,10 @@ var app = new Vue({
         sendPinMessage: function(){
             let command = this.pinMessage
             this.exampleSocket.send(JSON.stringify(command))
-            app._data.debug.push({timestamp:new Date().toLocaleTimeString("de-DE"),content:"Send:"+command.type})
         },
         sendupdateMapMessage: function () {
             let command = this.updateMapMessage
             this.exampleSocket.send(JSON.stringify(command))
-            app._data.debug.push({timestamp:new Date().toLocaleTimeString("de-DE"),content:"Send:"+command.type})
         },
         sendPinMessageRainbow: async function(){
             let pins = ["pinD1","pinD2","pinD3","pinD4"],
@@ -80,7 +79,6 @@ var app = new Vue({
             this.exampleSocket.send(JSON.stringify({type:"updatePin",target:"esp_1",pin:pins[pins.length-1],pin_status:0}))
             let command = this.pinMessage
             this.exampleSocket.send(JSON.stringify(command))
-            app._data.debug.push({timestamp:new Date().toLocaleTimeString("de-DE"),content:"Send:"+command.type})
         },
         getKey: function(obj,key2){
             return Object.keys(obj).filter(function(key) {return obj[key] === key2})[0];
